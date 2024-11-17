@@ -1,38 +1,105 @@
-.App {
+/* .App {
+  justify-content: center;
+} */
+
+body {
+  margin: 0;
+  font-family: "Arial", sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 24px;
+  color: #555;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 100px auto;
+  background-color: #fff;
+  height: auto;
+  width: 500px;
+}
+
+.start-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-page {
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.history-list {
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.result-page {
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+button {
+  height: auto;
+  width: auto;
+  padding: 10px 20px;
+  border: 1px solid;
+  border-radius: 5px;
+  background-color: lightblue;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 10px;
+}
+
+.question {
+  margin-bottom: 20px;
+}
+
+.question h2 {
+  font-size: 24px;
+}
+
+.answer-item {
   display: flex;
   flex-direction: column;
+  margin-top: 10px;
+  width: auto;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+}
+
+.answer-item button {
+  padding: 10px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
   color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: auto;
+  align-items: center;
+  justify-content: center;
 }
 
-.App-link {
-  color: #61dafb;
+.answer bottom :hover {
+  background-color: #0056b3;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.result {
+  text-align: center;
+}
+
+.result p {
+  font-size: 24px;
 }
