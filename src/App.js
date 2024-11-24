@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Router, Routes, Route, Link } from "react-router-dom";
-// import styled from "styled-components";
+import { Router, Routes, Route, Link, useParams } from "react-router-dom";
+import axios from "axios";
 import "./App.css";
 
 export const App = () => {
@@ -11,13 +11,14 @@ export const App = () => {
   const [correct, setCorrect] = useState(0);
   const [history, setHistory] = useState([]);
 
+  // console.log(history);
+
   useEffect(() => {
     const fetchData = () => {
       setLoading(true);
       fetch("http://localhost:3001/questions")
         .then((response) => response.json())
         .then((data) => {
-          // console.log(data);
           setQuestionsData(data);
           setLoading(false);
         });
@@ -27,12 +28,15 @@ export const App = () => {
 
     const savedHistory = JSON.parse(localStorage.getItem("history")) || [];
     setHistory(savedHistory);
+    // console.log(savedHistory);
+    // console.log(history);
+    // console.log(localStorage);
   }, []);
 
   const saveHistory = () => {
     const newDate = new Date();
     const newEntry = {
-      date: newDate().toLocalString(),
+      date: newDate.toLocaleString(),
       totalQuestions: questionsData.length,
       correctAnswers: correct,
     };
@@ -45,7 +49,7 @@ export const App = () => {
     return (
       <div className="start-page">
         <h1>Добро пожаловать в игру!</h1>
-        <Link to="/questions/">
+        <Link to="/questions/0">
           <button>Начать игру</button>
         </Link>
         <Link to="/edit">
@@ -56,25 +60,18 @@ export const App = () => {
     );
   };
 
-  const Game = ({ step }) => {
+  const Game = () => {
+    const { id } = useParams();
+    const step = parseInt(id, 10);
     const question = questionsData[step];
-    console.log(questionsData);
-    console.log(step);
 
     const onClickVariant = (id) => setSelectedVariant(id);
 
     const nextQuestionButton = () => {
       if (selectedVariant === question.correct) {
         setCorrect(correct + 1);
-        // setStep(step + 1);
       }
       setSelectedVariant(null);
-    };
-
-    const endGame = () => {
-      saveHistory();
-      setCorrect(0);
-      setStep(0);
     };
 
     return (
@@ -104,32 +101,39 @@ export const App = () => {
             Предыдущий вопрос
           </button>
         </Link>
-        <Link to={`/questions/${step + 1}`}>
-          <button
-            className="btn-next-question"
-            type="button"
-            onClick={nextQuestionButton}
-            disabled={
-              selectedVariant === null || step >= questionsData.length - 1
-            }
-          >
-            Следующий вопрос
-          </button>
-        </Link>
-        {step === questionsData.length - 1 && (
-          <Link to="/result" onClick={endGame}>
+        {step + 1 >= questionsData.length ? (
+          <Link to="/result">
             <button>Завершить викторину</button>
+          </Link>
+        ) : (
+          <Link to={`/questions/${step + 1}`}>
+            <button
+              className="btn-next-question"
+              type="button"
+              onClick={nextQuestionButton}
+              disabled={
+                selectedVariant === null || step >= questionsData.length - 1
+              }
+            >
+              Следующий вопрос
+            </button>
           </Link>
         )}
       </div>
     );
   };
 
-  const Result = ({ correct }) => {
+  const Result = () => {
+    const endGame = () => {
+      saveHistory();
+      setCorrect(0);
+      setStep(0);
+    };
+
     return (
       <div className="result-page">
         <h3>Количество правильных ответов {correct}</h3>
-        <Link to="/">
+        <Link to="/" onClick={endGame}>
           <button>Начать заново</button>
         </Link>
       </div>
@@ -137,27 +141,33 @@ export const App = () => {
   };
 
   const HistoryList = () => {
+    console.log(history);
     return (
       <div className="history-list">
         <h3>История прохождений</h3>
-        <ul>
-          {history.map((entry, id) => (
-            <li key={id}>
-              {entry.date}: {entry.totalQuestions} вопросов,{" "}
-              {entry.correctAnswers} правильных ответов
-            </li>
-          ))}
-        </ul>
+        {!history ? (
+          <div>Отсутствует история прохождения</div>
+        ) : (
+          <ul>
+            {history.map((entry, id) => (
+              <li key={id}>
+                {entry.date}: вопросов - {entry.totalQuestions} , правильных
+                ответов - {entry.correctAnswers}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     );
   };
 
   const EditQuestions = () => {
+    const [questionData, setQuestionData] = useState([]);
     const [newQuestion, setNewQuestion] = useState("");
     const [newVariants, setNewVariants] = useState(["", ""]);
     const [correctVariant, setCorrectVariant] = useState(0);
 
-    const addQuestion = () => {
+    const addQuestion = async () => {
       if (newQuestion.trim() === "") return;
 
       const question = {
@@ -166,65 +176,86 @@ export const App = () => {
         correct: correctVariant,
       };
 
-      setQuestionsData([...questionsData, question]);
+      const response = await axios.post(
+        "http://localhost:3001/questions",
+        question
+      );
+      setQuestionsData([...questionsData, response.data]);
       setNewQuestion("");
       setNewVariants(["", ""]);
       setCorrectVariant(0);
     };
 
-    const removeQuestion = (id) => {
+    const removeQuestion = async (id) => {
+      await axios.delete(`http://localhost:3001/questions/${id}`);
       setQuestionsData((questionsData) =>
         questionsData.filter((_, i) => i !== id)
       );
     };
 
-    const updateQuestion = (id, field, value) => {
+    const updateQuestion = async (id, field, value) => {
       const updatedQuestions = [...questionsData];
       if (field === "title") {
         updatedQuestions[id].title = value;
       } else if (field === "correct") {
         updatedQuestions[id].correct = value;
       }
+
+      await axios.put(
+        `http://localhost:3001/questions/${updatedQuestions[id]._id}`,
+        updatedQuestions[id]
+      );
       setQuestionsData(updatedQuestions);
     };
 
-    const updateVariant = (questionId, variantId, value) => {
+    const updateVariant = async (questionId, variantId, value) => {
       const updatedQuestions = [...questionsData];
       updatedQuestions[questionId].variants[variantId] = value;
+
+      await axios.put(
+        `http://localhost:3001/questions/${updatedQuestions[questionId]._id}`,
+        updatedQuestions[questionId]
+      );
       setQuestionsData(updatedQuestions);
     };
 
     return (
       <div className="edit-questions">
         <h2>Редактирование вопросов</h2>
-        {questionsData.map((question, id) => (
-          <div key={id} className="question-item">
+        {questionsData.map((question, questionId) => (
+          <div key={questionId} className="question-item">
             <input
               type="text"
               value={question.title}
-              onChange={(e) => updateQuestion(id, "title", e.target.value)}
+              onChange={(e) =>
+                updateQuestion(questionId, "title", e.target.value)
+              }
             />
-            {question.variants.map((variant, id) => (
+            {question.variants.map((variant, variantId) => (
               <input
-                key={id}
+                key={variantId}
                 type="text"
                 value={variant}
-                onChange={(e) => updateVariant(id, e.target.value)}
+                onChange={(e) =>
+                  updateVariant(questionId, variantId, e.target.value)
+                }
               />
             ))}
             <select
               value={question.correct}
               onChange={(e) =>
-                updateQuestion(id, "correct", Number(e.target.value))
+                updateQuestion(questionId, "correct", Number(e.target.value))
               }
             >
-              {question.variants.map((_, vid) => (
-                <option key={vid} value={vid}>
-                  Вариант {vid + 1}
+              {question.variants.map((_, variantId) => (
+                <option key={variantId} value={variantId}>
+                  Вариант {variantId + 1}
                 </option>
               ))}
             </select>
-            <button onClick={() => removeQuestion(id)}>Удалить вопрос</button>
+            <button onClick={() => removeQuestion(questionId)}>
+              Удалить вопрос
+            </button>
           </div>
         ))}
         <h3>Добавить новый вопрос</h3>
@@ -260,7 +291,9 @@ export const App = () => {
             </option>
           ))}
         </select>
-        <button onClick={addQuestion}>Добавить вопрос</button>
+        <Link to="/">
+          <button onClick={addQuestion}>Сохранить изменения</button>
+        </Link>
       </div>
     );
   };
@@ -268,16 +301,13 @@ export const App = () => {
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
-  // if (step === questionsData.length) {
-  //   return <Result correct={correct} />;
-  // }
 
   return (
     <div className="app-container">
       <Routes>
         <Route path="/" element={<StartPage />} />
-        <Route path="/questions/" element={<Game step={step} />} />
-        <Route path="/result" element={<Result correct={correct} />} />
+        <Route path="/questions/:id" element={<Game />} />
+        <Route path="/result" element={<Result />} />
         <Route path="/edit" element={<EditQuestions />} />
       </Routes>
     </div>
