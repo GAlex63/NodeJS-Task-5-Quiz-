@@ -11,6 +11,11 @@ async function getQuestions() {
   return questions;
 }
 
+async function getOneQuestion(id) {
+  const oneQuestion = await Questions.findById(id).exec();
+  return oneQuestion;
+}
+
 async function removeQuestion(id) {
   await Questions.deleteOne({ _id: id });
 }
@@ -29,6 +34,7 @@ async function updateQuestion(questionData) {
 module.exports = {
   addQuestion,
   getQuestions,
+  getOneQuestion,
   removeQuestion,
   updateQuestion,
 };

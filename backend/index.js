@@ -6,6 +6,7 @@ const cors = require("cors");
 const Note = require("./models/Questions");
 const {
   getQuestions,
+  getOneQuestion,
   addQuestion,
   removeQuestion,
   updateQuestion,
@@ -26,6 +27,13 @@ app.get("/questions", async (req, res) => {
   // });
 });
 
+app.get("/questions/:id", async (req, res) => {
+  const { id } = req.params;
+  const oneQuestion = await getOneQuestion(id);
+
+  res.json(oneQuestion);
+});
+
 app.post("/questions", async (req, res) => {
   const { title, variants, correct } = req.body;
   const newQuestion = await addQuestion({ title, variants, correct });
@@ -42,8 +50,6 @@ app.put("/questions/:id", async (req, res) => {
 app.delete("/questions/:id", async (req, res) => {
   const { id } = req.params;
   await removeQuestion(id);
-  console.log(id);
-
   res.send();
 });
 
